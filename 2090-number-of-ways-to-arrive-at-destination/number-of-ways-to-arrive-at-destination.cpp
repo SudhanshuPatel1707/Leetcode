@@ -1,9 +1,27 @@
 class Solution {
+private:
+long long numOfways(int node, int dest, vector<int> parent[], vector<long long>& ways)
+{
+    int mod = (int)1e9 + 7;
+    if(node == dest) return 1;
+    if(ways[node] != 0) return ways[node];
 
+    for (int i = 0; i < parent[node].size(); i++)
+    {
+        ways[node] = (numOfways(parent[node][i], dest, parent, ways) + ways[node])%mod;
+    }
+
+    return ways[node]%mod;
+}
 public:
     int countPaths(int n, vector<vector<int>>& roads) {
+    int mod = 1e9 + 7;
     int N = n;
     int E = roads.size();
+    // Given an Undirected and connected Graph. 
+    // We have to return the number of ways to arrive the N-1th node from the 0th node in shortest time.
+
+    // S-1 : store all the edges when the condition, time[u] + W = time[v] is met, as an edge.
     
     vector<pair<int, int>> adjList[N];
 
@@ -14,21 +32,19 @@ public:
     }
     
     vector<long long> time(N, LLONG_MAX);
-    vector<long long> ways(N, 0);
+    vector<int> parent[N];
     
     // src = 0;
 
     time[0] = 0;
-    ways[0] = 1;
-
-    priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<pair<long long, int>>> pq;      // {level, node};
-    pq.push({time[0], 0});
     
-    int mod = (int)1e9 + 7;
-    while (!pq.empty())
+    set<pair<long long, int>> st;
+    st.insert({time[0], 0});
+
+    while (!st.empty())
     {
-        auto it  = pq.top();
-        pq.pop();
+        auto it  = *st.begin();
+        st.erase(it);
 
         int node = it.second;
         long long T = it.first;
@@ -43,13 +59,20 @@ public:
             if((T + t) < time[m]) 
             {
                 time[m] = (T + t);
-                pq.push({time[m], m});
-                ways[m] = ways[node];
+                st.insert({time[m], m});
+                parent[m].clear();
+                parent[m].push_back(node);
             }
-            else if((T + t) == time[m]) ways[m] = (ways[m] + ways[node])%mod;
+            else if((T + t) == time[m]) parent[m].push_back(node);
+            
         }
     }
-        
-    return ways[N-1]%mod;
+    
+    // Now we are having a DAG as parent.
+    // So, backtrack from destination node to the start node using the edges stored in parent.
+
+    vector<long long> ways(N, 0);
+
+    return numOfways(N-1, 0, parent, ways);
     }
 };
