@@ -1,38 +1,55 @@
 class Solution {
+
 public:
     int countPaths(int n, vector<vector<int>>& roads) {
-        vector<vector<pair<int, long long>>> adj(n);
-        for (auto& road : roads) {
-            int u = road[0], v = road[1], wt = road[2];
-            adj[u].push_back({v, wt});
-            adj[v].push_back({u, wt});
-        }
+    int N = n;
+    int E = roads.size();
+    
+    vector<pair<int, int>> adjList[N];
 
-        priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<pair<long long, int>>> pq;
-        vector<long long> dist(n, LLONG_MAX);
-        vector<int> ways(n, 0);
-        dist[0] = 0;
-        ways[0] = 1;
-        pq.push({0, 0});
+    for (int i = 0; i < E; i++)
+    {
+        adjList[roads[i][0]].push_back({roads[i][1], roads[i][2]});
+        adjList[roads[i][1]].push_back({roads[i][0], roads[i][2]});
+    }
+    
+    vector<long long> time(N, LLONG_MAX);
+    vector<long long> ways(N, 0);
+    
+    // src = 0;
 
-        int mod = (int)(1e9 + 7);
+    time[0] = 0;
+    ways[0] = 1;
 
-        while (!pq.empty()) {
-            long long dis = pq.top().first;
-            int node = pq.top().second;
-            pq.pop();
+    priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<pair<long long, int>>> pq;      // {level, node};
+    pq.push({time[0], 0});
+    
+    int mod = (int)1e9 + 7;
+    while (!pq.empty())
+    {
+        auto it  = pq.top();
+        pq.pop();
 
-            for (auto& [adjNode, wt] : adj[node]) {
-                if (dis + wt < dist[adjNode]) {
-                    dist[adjNode] = dis + wt;
-                    pq.push({dis + wt, adjNode});
-                    ways[adjNode] = ways[node];
-                } else if (dis + wt == dist[adjNode]) {
-                    ways[adjNode] = (ways[adjNode] + ways[node]) % mod;
-                }
+        int node = it.second;
+        long long T = it.first;
+
+        for (int i = 0; i < adjList[node].size(); i++)
+        {
+            int m = adjList[node][i].first;
+            long long t = adjList[node][i].second;
+
+            // Our destination is (N-1)th node so will not pass through it we will just arrive it.
+            
+            if((T + t) < time[m]) 
+            {
+                time[m] = (T + t);
+                pq.push({time[m], m});
+                ways[m] = ways[node];
             }
+            else if((T + t) == time[m]) ways[m] = (ways[m] + ways[node])%mod;
         }
-
-        return ways[n - 1] % mod;
+    }
+        
+    return ways[N-1]%mod;
     }
 };
